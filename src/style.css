@@ -32,3 +32,24 @@
 .real-3d-entrance .opening-copy .scene-link:hover{background:#fff;transform:translateY(-3px)}
 .real-3d-entrance .scene-counter{z-index:3;text-shadow:0 1px 8px #000}
 @media(max-width:560px){.real-3d-entrance .opening-copy h1{font-size:53px}.real-3d-entrance .opening-copy{bottom:11%}}
+
+
+/* Scroll-driven continuous 3D journey */
+.scroll-journey{position:relative;height:360svh;min-height:2400px;background:#514536;isolation:isolate}
+.journey-viewport{position:sticky;top:0;height:100svh;min-height:560px;overflow:hidden;background:#514536}
+.journey-viewport .three-room{position:absolute;inset:0;z-index:0}
+.journey-viewport .three-room canvas{display:block;width:100%;height:100%}
+.journey-vignette{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,#100d0a55,transparent 68%),linear-gradient(0deg,#100d0a66,transparent 32%);mix-blend-mode:multiply}
+.journey-copy{position:absolute;z-index:3;left:8%;bottom:17%;color:#f8f3eb;pointer-events:none;animation:journeyCopyIn .65s both}
+.journey-copy .scene-kicker{color:#e4d2b6}
+.journey-copy h1{font:clamp(58px,8vw,112px)/.91 var(--serif);letter-spacing:-.045em;margin:20px 0 18px;text-shadow:0 3px 25px #0004}
+.journey-copy h1 em{color:#dfc7a7}
+.journey-copy p{font-size:9px;letter-spacing:.19em;color:#eee3d4}
+@keyframes journeyCopyIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.journey-progress{position:absolute;z-index:3;left:8%;right:8%;bottom:35px;display:flex;align-items:center;gap:16px;color:#f3e9db;font-size:8px;letter-spacing:.16em}
+.journey-progress i{display:block;width:min(180px,22vw);height:1px;background:#ffffff70;overflow:hidden}
+.journey-progress i b{display:block;width:100%;height:100%;background:#f3e9db;transform-origin:left;transition:transform .5s}
+.journey-hint{position:absolute;z-index:3;right:8%;bottom:32px;display:flex;align-items:center;gap:9px;color:#f3e9db;font-size:8px;letter-spacing:.15em;animation:hintFloat 1.8s ease-in-out infinite}
+@keyframes hintFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+@media(max-width:700px){.scroll-journey{height:330svh;min-height:2100px}.journey-copy{left:7%;right:6%;bottom:18%}.journey-copy h1{font-size:clamp(52px,12vw,76px)}.journey-copy p{font-size:7px}.journey-progress{left:7%;right:7%;bottom:25px;gap:10px;font-size:7px}.journey-hint{right:7%;bottom:55px;font-size:7px}}
+@media(prefers-reduced-motion:reduce){.journey-hint{animation:none}.journey-copy{animation:none}}
