@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ArrowDown, ArrowRight, ArrowUpRight, Check, Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
 import { navigation, products, editorialCopy } from "./data/storefront";
 import "./style.css";
+import ImmersiveEntrance from "./components/ImmersiveEntrance";
 
 const money = value => "₹" + value.toLocaleString("en-IN");
 
@@ -30,18 +31,7 @@ function Header({ bagCount, onBag, onSearch }) {
   </>;
 }
 
-function SceneOpening() {
-  return <section className="scene-opening" id="top">
-    <div className="opening-grain" />
-    <div className="opening-copy"><span className="scene-kicker">CHEC — OBJECTS FOR EVERYDAY LIFE</span><h1>LESS NOISE.<br/><em>MORE STYLE.</em></h1><a href="#studio" className="scene-link">DISCOVER THE WORLD OF CHEC <ArrowDown size={15}/></a></div>
-    <div className="plaster-room" aria-hidden="true">
-      <div className="room-ceiling"/><div className="room-wall wall-left"/><div className="room-wall wall-right"/>
-      <div className="room-arch"><div className="double-door"><i/><i/><b/><b/></div></div>
-      <div className="ring ring-a"/><div className="ring ring-b"/><div className="armchair"><span/><i/></div><div className="room-floor"/>
-    </div>
-    <div className="scene-counter">01 / 08 <span>SCROLL TO ENTER</span></div>
-  </section>;
-}
+function SceneOpening() { return <ImmersiveEntrance/>; }
 
 function StudioScenes() {
   return <>
