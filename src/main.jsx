@@ -79,7 +79,6 @@ function App() {
     <Header bagCount={count} onBag={() => setBagOpen(true)} onSearch={() => setSearchOpen(!searchOpen)}/>
     {searchOpen && <div className="search-bar"><Search/><input autoFocus placeholder="Search the collection" value={search} onChange={e => setSearch(e.target.value)}/><button onClick={() => {setSearch("");setSearchOpen(false)}}><X/></button></div>}
     <SceneOpening/>
-    <StudioScenes/>
     <section className="hero-campaign">
       <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=2200&q=90" alt="Fashion campaign portrait"/>
       <div className="hero-overlay"/><div className="hero-campaign-copy"><span className="scene-kicker">THE CHEC POINT OF VIEW</span><h2>REDEFINING<br/><em>EVERYDAY</em><br/>LUXURY.</h2><a href="#statement" className="cream-button">EXPLORE THE COLLECTION <ArrowUpRight size={15}/></a></div><span className="hero-note">CAMPAIGN 01 — 2026</span>
