@@ -1,156 +1,178 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { ArrowDown, ArrowRight } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 
 export default function ImmersiveEntrance() {
+  const sectionRef = useRef(null);
   const mountRef = useRef(null);
-  const sceneApi = useRef(null);
-  const [entered, setEntered] = useState(false);
+  const [chapter, setChapter] = useState(0);
 
   useEffect(() => {
     const host = mountRef.current;
-    if (!host) return;
+    const section = sectionRef.current;
+    if (!host || !section) return;
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#554839");
-    scene.fog = new THREE.Fog("#554839", 9, 24);
-    const camera = new THREE.PerspectiveCamera(42, host.clientWidth / host.clientHeight, 0.1, 80);
-    camera.position.set(0, 2.1, 8.7);
-    camera.lookAt(0, 1.8, -3.5);
-
+    scene.fog = new THREE.Fog("#554839", 12, 42);
+    const camera = new THREE.PerspectiveCamera(43, host.clientWidth / host.clientHeight, 0.1, 120);
+    camera.position.set(0, 2.1, 9.2);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
     renderer.setSize(host.clientWidth, host.clientHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 1.15;
     host.appendChild(renderer.domElement);
 
-    const room = new THREE.Group();
-    scene.add(room);
-    const plaster = new THREE.MeshStandardMaterial({ color: "#a38d73", roughness: 0.94 });
-    const sideMat = new THREE.MeshStandardMaterial({ color: "#796956", roughness: 0.95 });
-    const dark = new THREE.MeshStandardMaterial({ color: "#171716", roughness: 0.68 });
-    const brass = new THREE.MeshStandardMaterial({ color: "#b9945e", metalness: 0.72, roughness: 0.27 });
-    const floorMat = new THREE.MeshStandardMaterial({ color: "#665443", roughness: 0.88 });
-    const addBox = (w,h,d,mat,x,y,z,parent=room) => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
-      mesh.position.set(x,y,z); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh;
+    const world = new THREE.Group();
+    scene.add(world);
+    const mat = (color, roughness=0.85, metalness=0) => new THREE.MeshStandardMaterial({color, roughness, metalness});
+    const plaster = mat("#a38d73"), shadowWall = mat("#665747"), dark = mat("#191817",.65,.12);
+    const brass = mat("#b9945e",.28,.7), floorMat = mat("#6b5947"), cream = mat("#e2d2b8");
+    const addBox = (parent,w,h,d,material,x,y,z) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+      m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; parent.add(m); return m;
     };
 
-    addBox(18, 9, 0.45, plaster, 0, 4.3, -6.3);
-    addBox(0.45, 9, 14, sideMat, -6.9, 4.3, 0);
-    addBox(0.45, 9, 14, sideMat, 6.9, 4.3, 0);
-    addBox(18, 0.35, 14, floorMat, 0, -0.18, 0);
-    addBox(18, 0.3, 14, plaster, 0, 8.8, 0);
-    // Architectural doorway surround: thick stone piers and a curved crown.
-    addBox(0.62, 5.2, 0.8, brass, -2.55, 2.6, -3.85);
-    addBox(0.62, 5.2, 0.8, brass, 2.55, 2.6, -3.85);
-    const archCurve = new THREE.TorusGeometry(2.25, 0.19, 18, 96, Math.PI);
-    const arch = new THREE.Mesh(archCurve, brass);
-    arch.rotation.z = Math.PI; arch.position.set(0, 5.2, -3.85); arch.castShadow = true; room.add(arch);
-    addBox(4.5, 0.25, 0.8, brass, 0, 5.1, -3.85);
-
-    // Double doors pivot on their outer edges so the opening is physically hinged.
-    const doorMaterial = new THREE.MeshStandardMaterial({ color: "#211f1c", roughness: 0.58, metalness: 0.12 });
-    const doorLeft = new THREE.Group(); doorLeft.position.set(-2.2, 0, -3.82); room.add(doorLeft);
-    const doorRight = new THREE.Group(); doorRight.position.set(2.2, 0, -3.82); room.add(doorRight);
-    const makeDoor = (pivot, side) => {
-      const panel = new THREE.Mesh(new THREE.BoxGeometry(2.18, 4.98, 0.2), doorMaterial);
-      panel.position.x = side * 1.09; panel.position.y = 2.5; panel.castShadow = true; panel.receiveShadow = true; pivot.add(panel);
-      for (let x of [0.42, 1.08, 1.74]) {
-        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.035, 4.6, 0.025), brass);
-        strip.position.set(side * x, 2.5, 0.12); pivot.add(strip);
-      }
-      const handle = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 12), brass);
-      handle.position.set(side * 1.8, 2.45, 0.18); pivot.add(handle);
+    // Entrance architecture: a real hinged double door in a deep boutique room.
+    addBox(world,18,9,.5,plaster,0,4.3,-6.3);
+    addBox(world,.5,9,20,shadowWall,-7,4.3,-.2);
+    addBox(world,.5,9,20,shadowWall,7,4.3,-.2);
+    addBox(world,18,.35,22,floorMat,0,-.18,-.5);
+    addBox(world,18,.3,22,plaster,0,8.8,-.5);
+    addBox(world,.58,5.3,.8,brass,-2.45,2.65,-3.9);
+    addBox(world,.58,5.3,.8,brass,2.45,2.65,-3.9);
+    const arch=new THREE.Mesh(new THREE.TorusGeometry(2.2,.18,18,96,Math.PI),brass);
+    arch.rotation.z=Math.PI; arch.position.set(0,5.2,-3.9); world.add(arch);
+    const left=new THREE.Group(), right=new THREE.Group();
+    left.position.set(-2.15,0,-3.82); right.position.set(2.15,0,-3.82); world.add(left,right);
+    const makeDoor=(pivot,side)=>{
+      addBox(pivot,2.12,4.95,.2,dark,side*1.06,2.48,0);
+      for(const x of [.42,1.05,1.68]) addBox(pivot,.035,4.55,.035,brass,side*x,2.48,.13);
+      const knob=new THREE.Mesh(new THREE.SphereGeometry(.07,16,12),brass);
+      knob.position.set(side*1.78,2.4,.18); pivot.add(knob);
     };
-    makeDoor(doorLeft, 1); makeDoor(doorRight, -1);
+    makeDoor(left,1); makeDoor(right,-1);
 
-    // Rear studio glimpsed beyond the doors.
-    addBox(12, 7, 0.25, new THREE.MeshStandardMaterial({ color: "#8e785d", roughness: 1 }), 0, 3.4, -11.7);
-    const mannequin = new THREE.Group(); mannequin.position.set(0.4, 0, -9.6); room.add(mannequin);
-    const linen = new THREE.MeshStandardMaterial({ color: "#d2c0a2", roughness: 0.92 });
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.48, 1.15, 6, 16), linen);
-    torso.position.y = 2.25; torso.scale.set(1, 1.15, 0.68); mannequin.add(torso);
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.42, 18), linen); neck.position.y = 3.15; mannequin.add(neck);
-    const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,1.8,12), brass); stand.position.y = 0.9; mannequin.add(stand);
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.48,0.48,0.08,32), dark); base.position.y = 0.05; mannequin.add(base);
+    // Chapter two: checkerboard runway wall, mannequin and sculptural display.
+    const checker = new THREE.Group(); checker.position.set(0,0,-15); world.add(checker);
+    const tile=mat("#ded8cc"), tileDark=mat("#292724");
+    const tileSize=.72;
+    for(let row=0;row<10;row++) for(let col=0;col<14;col++)
+      addBox(checker,tileSize,.62,.12,(row+col)%2?tile:tileDark,(col-6.5)*tileSize,1.1+row*.62,0);
+    const mannequin=new THREE.Group(); mannequin.position.set(-1.65,0,-13.2); world.add(mannequin);
+    const linen=mat("#d5c5aa");
+    const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.48,1.2,6,18),linen); torso.position.y=2.3; torso.scale.set(1.05,1.1,.72); mannequin.add(torso);
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(.12,.15,.4,18),linen); neck.position.y=3.2; mannequin.add(neck);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.27,24,18),linen); head.position.y=3.58; mannequin.add(head);
+    addBox(mannequin,.08,1.65,.08,brass,0,.9,0);
+    const pedestal=new THREE.Mesh(new THREE.CylinderGeometry(.55,.62,.16,48),dark); pedestal.position.y=.08; mannequin.add(pedestal);
+    const checkerLight=new THREE.PointLight("#f5e3c7",34,16); checkerLight.position.set(0,5,-13); world.add(checkerLight);
 
-    // Ochre lounge chair, kept to the right edge of the entrance.
-    const chairMat = new THREE.MeshStandardMaterial({ color: "#a97932", roughness: 0.84 });
-    const chair = new THREE.Group(); chair.position.set(4.25, 0, 1.0); room.add(chair);
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(1.65,0.5,1.3), chairMat); seat.position.y = 0.75; seat.castShadow = true; chair.add(seat);
-    const back = new THREE.Mesh(new THREE.BoxGeometry(1.65,1.7,0.38), chairMat); back.position.set(0,1.75,-0.48); back.castShadow = true; chair.add(back);
-    const cushion = new THREE.Mesh(new THREE.BoxGeometry(1.15,0.18,0.86), new THREE.MeshStandardMaterial({color:"#eee8dc",roughness:1})); cushion.position.set(0,1.08,0.12); chair.add(cushion);
-    for (const x of [-0.62,0.62]) for (const z of [-0.45,0.45]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.035,0.65,10), dark); leg.position.set(x,0.32,z); chair.add(leg);
+    // Chapter three: warm amber product stage and a sculptural handbag.
+    const productStage=new THREE.Group(); productStage.position.set(0,0,-27); world.add(productStage);
+    const amberWall=mat("#98643a");
+    addBox(productStage,18,9,.35,amberWall,0,4.2,-2.8);
+    const halo=new THREE.Mesh(new THREE.TorusGeometry(3.25,.12,20,100),mat("#e8bd7e",.25,.3));
+    halo.position.set(0,3.55,-2.45); productStage.add(halo);
+    const bag=new THREE.Group(); bag.position.set(.15,1.2,-1.3); productStage.add(bag);
+    const bagBody=new THREE.Mesh(new THREE.BoxGeometry(1.8,1.55,.72),mat("#d7c4a5",.72));
+    bagBody.position.y=.9; bagBody.castShadow=true; bag.add(bagBody);
+    const handle=new THREE.Mesh(new THREE.TorusGeometry(.48,.075,14,48,Math.PI),mat("#d7c4a5",.65));
+    handle.position.set(0,1.72,0); bag.add(handle);
+    const clasp=new THREE.Mesh(new THREE.BoxGeometry(.15,.18,.04),brass); clasp.position.set(0,.98,.39); bag.add(clasp);
+    const plinth=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.65,.3,64),mat("#c6a477"));
+    plinth.position.set(.15,.15,-1.3); productStage.add(plinth);
+    const lantern=new THREE.Mesh(new THREE.CylinderGeometry(.38,.5,1.5,12,1,true),brass);
+    lantern.position.set(-4,4.3,-1.9); productStage.add(lantern);
+    const branch=new THREE.Group(); branch.position.set(4,1.5,-1.8); productStage.add(branch);
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(.025,.045,4,8),dark); stem.rotation.z=-.18; branch.add(stem);
+    for(let i=0;i<7;i++){
+      const leaf=new THREE.Mesh(new THREE.SphereGeometry(.22,12,10),mat("#4e4936"));
+      leaf.scale.set(1.7,.45,.25); leaf.position.set((i%2?-.45:.45),-1.5+i*.48,0); leaf.rotation.z=i%2?.5:-.5; branch.add(leaf);
     }
 
-    // Hanging luminous rings.
-    const ringMat = new THREE.MeshStandardMaterial({ color:"#f5d7a4", emissive:"#dba85c", emissiveIntensity:2.4, metalness:0.3, roughness:0.25 });
-    [[-2.8,6.7,-1.0,0.72],[2.2,6.15,-1.8,0.48]].forEach(([x,y,z,r]) => {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(r,0.035,12,64), ringMat);
-      ring.position.set(x,y,z); ring.rotation.x = Math.PI/2.3; room.add(ring);
-      const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,1.1,8), dark); cable.position.set(x,y+0.55,z); room.add(cable);
-      const glow = new THREE.PointLight("#f2c887", 24, 7); glow.position.set(x,y-0.1,z); room.add(glow);
+    const ambient=new THREE.HemisphereLight("#f0ddc1","#261b13",1.55); scene.add(ambient);
+    const key=new THREE.DirectionalLight("#ffe1b8",3.1); key.position.set(-4,9,6); key.castShadow=true; key.shadow.mapSize.set(1024,1024); scene.add(key);
+    const warm=new THREE.PointLight("#e4a45c",45,24); warm.position.set(0,4,-27); scene.add(warm);
+    const rings=[];
+    [[-2.6,6.5,-1.2,.72],[2.2,6.1,-2,.48]].forEach(([x,y,z,r])=>{
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(r,.035,12,64),mat("#f5d7a4",.25,.3));
+      ring.position.set(x,y,z); ring.rotation.x=Math.PI/2.3; world.add(ring); rings.push(ring);
+      const light=new THREE.PointLight("#f2c887",18,8); light.position.set(x,y,z); world.add(light);
     });
 
-    const ambient = new THREE.HemisphereLight("#e9d4b2", "#2b2118", 1.6); scene.add(ambient);
-    const key = new THREE.DirectionalLight("#ffe0b1", 3.2); key.position.set(-3,8,5); key.castShadow = true; key.shadow.mapSize.set(1024,1024); scene.add(key);
-    const fill = new THREE.PointLight("#d89b55", 34, 15); fill.position.set(0,3,-7); scene.add(fill);
-
-    // Fine architectural grooves on the side walls.
-    for (let x=-6.45; x<=-6.0; x+=0.12) addBox(0.018,8.5,0.018,brass,x,4.2,-0.2);
-    for (let x=6.0; x<=6.45; x+=0.12) addBox(0.018,8.5,0.018,brass,x,4.2,-0.2);
-
-    let progress = 0, target = 0, raf = 0, disposed = false;
-    const animate = () => {
-      if (disposed) return;
-      raf = requestAnimationFrame(animate);
-      progress += (target - progress) * 0.055;
-      const eased = progress * progress * (3 - 2 * progress);
-      doorLeft.rotation.y = -eased * 1.32;
-      doorRight.rotation.y = eased * 1.32;
-      camera.position.z = 8.7 - eased * 7.0;
-      camera.position.y = 2.1 - eased * 0.12;
-      camera.position.x = Math.sin(eased * Math.PI) * 0.12;
-      camera.lookAt(0, 1.9, -4.2 - eased * 1.5);
-      ringMat.emissiveIntensity = 2.1 + Math.sin(performance.now() * 0.0017) * 0.25;
-      renderer.render(scene, camera);
+    let targetProgress=0, currentProgress=0, raf=0, disposed=false, lastChapter=-1;
+    const smooth=(a,b,t)=>a+(b-a)*t;
+    const updateScroll=()=>{
+      const rect=section.getBoundingClientRect();
+      const travel=Math.max(1,section.offsetHeight-window.innerHeight);
+      targetProgress=THREE.MathUtils.clamp(-rect.top/travel,0,1);
+    };
+    const onScroll=()=>updateScroll();
+    const onResize=()=>{
+      camera.aspect=host.clientWidth/host.clientHeight; camera.updateProjectionMatrix();
+      renderer.setSize(host.clientWidth,host.clientHeight); updateScroll();
+    };
+    updateScroll();
+    window.addEventListener("scroll",onScroll,{passive:true});
+    window.addEventListener("resize",onResize);
+    const animate=()=>{
+      if(disposed) return;
+      raf=requestAnimationFrame(animate);
+      currentProgress=smooth(currentProgress,targetProgress,.075);
+      const p=currentProgress;
+      // One continuous dolly move: entrance -> checkerboard mannequin -> amber bag.
+      const points=[
+        {x:0,y:2.1,z:9.2,lx:0,ly:1.9,lz:-4.5},
+        {x:0,y:2.0,z:1.0,lx:0,ly:2.0,lz:-14.8},
+        {x:0,y:2.15,z:-9.0,lx:0,ly:2.1,lz:-27.8},
+        {x:0,y:2.0,z:-22.0,lx:0,ly:2.1,lz:-29.2}
+      ];
+      const scaled=p*3, idx=Math.min(2,Math.floor(scaled)), t=THREE.MathUtils.smoothstep(scaled-idx,0,1);
+      const a=points[idx], b=points[idx+1];
+      camera.position.set(smooth(a.x,b.x,t),smooth(a.y,b.y,t),smooth(a.z,b.z,t));
+      camera.lookAt(smooth(a.lx,b.lx,t),smooth(a.ly,b.ly,t),smooth(a.lz,b.lz,t));
+      const doorOpen=THREE.MathUtils.smoothstep(p,.015,.15);
+      left.rotation.y=-doorOpen*1.35; right.rotation.y=doorOpen*1.35;
+      const productReveal=THREE.MathUtils.smoothstep(p,.55,.82);
+      bag.rotation.y=Math.sin(performance.now()*.0005)*.035;
+      bag.scale.setScalar(.8+productReveal*.2);
+      rings.forEach(r=>r.rotation.z=Math.sin(performance.now()*.0007)*.04);
+      scene.background.lerp(new THREE.Color(p<.48?"#554839":"#98643a"),.025);
+      scene.fog.color.copy(scene.background);
+      const next=p<.29?0:p<.62?1:2;
+      if(next!==lastChapter){lastChapter=next;setChapter(next);}
+      renderer.render(scene,camera);
     };
     animate();
-
-    const resize = () => {
-      if (!host) return;
-      camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix();
-      renderer.setSize(host.clientWidth, host.clientHeight);
-    };
-    window.addEventListener("resize", resize);
-    sceneApi.current = { open: () => { target = 1; setEntered(true); }, reset: () => { target = 0; setEntered(false); } };
-    return () => {
-      disposed = true; cancelAnimationFrame(raf); window.removeEventListener("resize", resize);
+    return ()=>{
+      disposed=true; cancelAnimationFrame(raf);
+      window.removeEventListener("scroll",onScroll); window.removeEventListener("resize",onResize);
       renderer.dispose(); renderer.domElement.remove();
-      room.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); });
-      sceneApi.current = null;
+      scene.traverse(o=>{if(o.geometry)o.geometry.dispose();});
     };
-  }, []);
+  },[]);
 
-  const enter = () => {
-    sceneApi.current?.open();
-    window.setTimeout(() => document.getElementById("studio")?.scrollIntoView({ behavior: "smooth" }), 1700);
-  };
-  const handleWheel = event => {
-    if (event.deltaY > 0 && !entered) { event.preventDefault(); enter(); }
-  };
-
-  return <section className="scene-opening real-3d-entrance" id="top" onWheel={handleWheel}>
-    <div className="three-room" ref={mountRef} aria-label="Interactive three-dimensional boutique entrance" />
-    <div className="opening-grain"/>
-    <div className="opening-copy"><span className="scene-kicker">CHEC — OBJECTS FOR EVERYDAY LIFE</span><h1>LESS NOISE.<br/><em>MORE STYLE.</em></h1>
-      <button className="scene-link enter-3d" onClick={enter}>{entered ? "ENTERING THE STUDIO" : "OPEN THE DOORS"} {entered ? <ArrowRight size={15}/> : <ArrowDown size={15}/>}</button>
+  const copy=[
+    {kicker:"CHEC — OBJECTS FOR EVERYDAY LIFE",title:<>LESS NOISE.<br/><em>MORE STYLE.</em></>,note:"SCROLL TO MOVE THROUGH THE SPACE"},
+    {kicker:"A SPACE TO EXPLORE",title:<>STEP INTO<br/><em>THE STUDIO.</em></>,note:"A STUDY IN FORM, MATERIAL AND MOTION"},
+    {kicker:"FORM MEETS FUNCTION",title:<>WEIGHTLESS<br/><em>LUXURY.</em></>,note:"AN OBJECT OF INTENT. A STUDY IN FORM."}
+  ];
+  return <section className="scroll-journey" id="top" ref={sectionRef}>
+    <div className="journey-viewport">
+      <div className="three-room" ref={mountRef} aria-label="Scroll-controlled three-dimensional CHEC boutique journey"/>
+      <div className="journey-vignette"/>
+      <div className="journey-copy" key={chapter}>
+        <span className="scene-kicker">{copy[chapter].kicker}</span>
+        <h1>{copy[chapter].title}</h1>
+        <p>{copy[chapter].note}</p>
+      </div>
+      <div className="journey-progress"><span>0{chapter+1} / 03</span><i><b style={{transform:`scaleX(${(chapter+1)/3})`}}/></i><span>SCROLL TO EXPLORE</span></div>
+      <div className="journey-hint"><ArrowDown size={14}/> SCROLL TO MOVE</div>
     </div>
-    <div className="scene-counter">01 / 08 <span>{entered ? "WELCOME INSIDE" : "SCROLL OR OPEN THE DOORS"}</span></div>
   </section>;
 }
